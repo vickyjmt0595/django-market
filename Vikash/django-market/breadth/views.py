@@ -41,7 +41,7 @@ def decide_market_status(last_5_values):
     day1, day2, day3, day4, day5 = [int(val)
                                     for val in
                                     last_5_values]
-    if day1 > 800:
+    if day1 >= 800:
         if (day1 > day2 > day3 > day4 > day5):
             if day1 < 1300:
                 return('Light Green')
@@ -111,7 +111,8 @@ def process_ema_data(twenty_ema_data, Date):
         index += 1
         start_index -= 1
         end_index -= 1
-    return analysis
+    # Reverse the order to show latest date first
+    return dict(reversed(analysis.items()))
 
 
 def home(request):
