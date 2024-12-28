@@ -14,6 +14,17 @@
         <button type="submit">Upload</button>
 
     </form>
+    <h1 >Already uploaded files</h1>
+    <ul>
+        {% for upload in uploads %}
+          <li>
+            
+            <a href="{% url 'file_analysis_view' upload.id %}">{{upload.file.name}} </a>
+        </li>
+        {% empty %}
+          <li>No files uploaded yet</li>
+        {% endfor %}
+    </ul>
 </body>
 
 </html>

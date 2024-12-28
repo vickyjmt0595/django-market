@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Market Breadth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .table-container {
+            overflow-x: auto; /* For horizontal scrolling on smaller screens */
+        }
+        .status-cell {
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        /* Add dynamic gradient or solid colors for statuses */
+        .status-green-to-yellow {
+            background: linear-gradient(to right, green, yellow);
+        }
+        .status-yellow-to-red {
+            background: linear-gradient(to right, yellow, red);
+        }
+        .status-bright-to-lightgreen {
+            background: linear-gradient(to right, Green, lightgreen);
+        }
+        .status-light-red {
+            background: lightcoral;
+        }
+        .status-dark-red {
+            background: darkred;
+        }
+        .status-dark-green {
+            background: rgb(0, 139, 23);
+        }
+        .status-light-green {
+            background: lightgreen;
+        }
+        .status-red-to-yellow {
+            background: linear-gradient(to right, red, yellow);
+        }
+        .status-yellow-to-green {
+            background: linear-gradient(to right, yellow, green);
+        }
+    </style>
+</head>
+<body>
+    <h1>Market Breadth Data </h1>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Day Number</th>
+                    <th>Last Five Days</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for date, details in data.items %}
+                <tr>
+                    <td>{{ date }}</td>
+                    <td>{{ details.day_num }}</td>
+                    <td>
+                        {% for value in details.last_five_days %}
+                            {{ value }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td class="status-cell 
+                        {% if details.status == 'Green to Yellow' %}
+                            status-green-to-yellow
+                        {% elif details.status == 'Yellow to Red' %}
+                            status-yellow-to-red
+                        {% elif details.status == 'Bright to Light Green' %}
+                            status-bright-to-lightgreen
+                        {% elif details.status == 'Light Red' %}
+                            status-light-red
+                        {% elif details.status == 'Light Green' %}
+                            status-light-green
+                        {% elif details.status == 'Bright Green' %}
+                            status-dark-green
+                        {% elif details.status == 'Dark Red' %}
+                            status-dark-red
+                        {% elif details.status == 'Red to Yellow' %}
+                            status-red-to-yellow
+                        {% elif details.status == 'Yellow to Green' %}
+                            status-yellow-to-green
+                        {% endif %}
+                    ">
+                        {{ details.status }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

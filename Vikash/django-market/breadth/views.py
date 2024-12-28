@@ -1,6 +1,6 @@
 import csv
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from .forms import FileUploadForm
 from .models import UploadFile
@@ -32,7 +32,8 @@ def get_ema_data(decoded_file, file=False):
             line_count += 1
         else:
             line_count += 1
-    csv_file.close()
+    if file:
+        csv_file.close()
 
     return breadth_details, Date
 
@@ -94,12 +95,13 @@ def process_ema_data(twenty_ema_data, Date):
         else:
             last_5_values = ema_20_values[start_index:end_index]
         days = ema_20_days[start_index]
-  
+        """
         print('---------------------------')
     
         print(days)
         print(Date[index+4])
         print(last_5_values[::-1])
+        """
         status = decide_market_status(last_5_values)
         analysis[Date[index+4]] = {
             'day_num': days,
@@ -119,6 +121,8 @@ def home(request):
     return HttpResponse(text_content, content_type='text/plain')
 
 def upload_file_view(request):
+    # Pass updated files to the template
+    recent_files = UploadFile.objects.order_by('-id')[:10]
     if request.method == 'POST':
         form = FileUploadForm(request.POST, request.FILES)
         if form.is_valid():
@@ -128,11 +132,15 @@ def upload_file_view(request):
             if uploaded_file.name.endswith('.csv'):
                 #return HttpResponse('Uploaded Successfully, will analyze later',
                 #                    content_type='text/plain')
+                file_instance = UploadFile.objects.create(file=uploaded_file)
+                file_instance.save()
                 decoded_file = uploaded_file.read().decode('utf-8')
                 twenty_ema_data, Date = get_ema_data(decoded_file)
                 analysis = process_ema_data(twenty_ema_data, Date)
+                
                 return render(request, 'breadth/file_analysis_result.html',
-                              {'data': analysis})
+                              {'data': analysis}
+                              )
             else:
                 return render(request, 'breadth/file_upload.html',
                               {'form': form,
@@ -142,7 +150,8 @@ def upload_file_view(request):
         form = FileUploadForm()
     
     return render(request, 'breadth/file_upload.html',
-                  {'form': form})
+                  {'form': form,
+                  'uploads': recent_files})
 
 class FileUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
@@ -159,6 +168,7 @@ class FileUploadView(APIView):
             #        destination.write(chunk)
             if uploaded_file.name.endswith('.csv'):
                 file_instance = UploadFile.objects.create(file=uploaded_file)
+                file_instance.save()
                 print(file_instance.file.path)
                 print(file_instance.file.url)
                 decoded_file = uploaded_file.read().decode('utf-8')
@@ -167,7 +177,7 @@ class FileUploadView(APIView):
                                                      file=True)
                 print(twenty_ema_data)
                 analysis = process_ema_data(twenty_ema_data, Date)
-                print({'data': analysis})
+                # print({'data': analysis})
                 return Response({'data': analysis},
                                 template_name='breadth/file_analysis_result.html')
             else:
@@ -179,3 +189,11 @@ class FileUploadView(APIView):
             
         return Response({'error': 'Invalid form data'},
                         template_name= 'breadth/file_upload.html')
+    
+def file_analysis_view(request, file_id):
+    file_instance = get_object_or_404(UploadFile, id=file_id)
+    decoded_file = file_instance.file.read().decode('utf-8')
+    twenty_ema_data, Date = get_ema_data(decoded_file)
+    analysis = process_ema_data(twenty_ema_data, Date)
+    return render(request, 'breadth/file_analysis_result.html',
+                  {'data': analysis})
