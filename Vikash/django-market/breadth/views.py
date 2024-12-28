@@ -5,6 +5,8 @@ from django.http import HttpResponse
 from .forms import FileUploadForm
 from .models import UploadFile
 
+from django.core.exceptions import ValidationError
+
 # API related imports below
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -116,10 +118,7 @@ def process_ema_data(twenty_ema_data, Date):
 
 
 def home(request):
-    text_content = "This is a simple text file.\nIt contains some sample text."
-
-    # Response 
-    return HttpResponse(text_content, content_type='text/plain')
+    return render(request, 'breadth/home.html')
 
 def upload_file_view(request):
     # Pass updated files to the template
@@ -133,8 +132,13 @@ def upload_file_view(request):
             if uploaded_file.name.endswith('.csv'):
                 #return HttpResponse('Uploaded Successfully, will analyze later',
                 #                    content_type='text/plain')
-                file_instance = UploadFile.objects.create(file=uploaded_file)
-                file_instance.save()
+                try:
+                    file_instance = UploadFile.objects.create(
+                                           file=uploaded_file)
+                    file_instance.save()
+                except ValidationError as err:
+                    return HttpResponse(err,
+                                        content_type='text/plain')
                 decoded_file = uploaded_file.read().decode('utf-8')
                 twenty_ema_data, Date = get_ema_data(decoded_file)
                 analysis = process_ema_data(twenty_ema_data, Date)
@@ -168,8 +172,13 @@ class FileUploadView(APIView):
             #    for chunk in uploaded_file.chunks():
             #        destination.write(chunk)
             if uploaded_file.name.endswith('.csv'):
-                file_instance = UploadFile.objects.create(file=uploaded_file)
-                file_instance.save()
+                try:
+                    file_instance = UploadFile.objects.create(
+                                           file=uploaded_file)
+                    file_instance.save()
+                except ValidationError as err:
+                    return HttpResponse(err,
+                                        content_type='text/plain')
                 print(file_instance.file.path)
                 print(file_instance.file.url)
                 decoded_file = uploaded_file.read().decode('utf-8')
