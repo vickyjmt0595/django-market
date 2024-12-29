@@ -21,7 +21,7 @@
         {% for upload in uploads %}
           <li>
             
-            <a href="{% url 'file_analysis_view' upload.id %}">{{upload.file.name}} </a>
+            <a href="{% url 'file_analysis_view' upload.slug %}">{{upload.file.name}} </a>
         </li>
         {% empty %}
           <li>No files uploaded yet</li>

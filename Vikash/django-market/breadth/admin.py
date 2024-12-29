@@ -4,4 +4,5 @@ from .models import UploadFile
 # Register your models here.
 @admin.register(UploadFile)
 class ModelUpload(admin.ModelAdmin):
-    pass    
+    list_display = ('file', 'checksum','slug')
+
