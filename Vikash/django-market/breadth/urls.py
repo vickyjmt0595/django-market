@@ -4,8 +4,9 @@ from . import views
 urlpatterns = [
 
     path('', views.home, name='home'),
-    path('upload/', views.upload_file_view, name='upload_file'),
-    path('api/upload/', views.FileUploadView.as_view(), name='file-upload-api'),
-    path('analysis/<slug:slug>',views.file_analysis_view,
-          name='file_analysis_view')
+    path('breadth-upload/', views.upload_file_view, name='upload_file'),
+    path('api/breadth-upload/', views.FileUploadView.as_view(),
+         name='file-upload-api'),
+    path('breadth-analysis/<slug:slug>',views.breadth_analysis_view,
+          name='breadth_analysis_view')
 ]

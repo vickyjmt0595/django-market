@@ -175,7 +175,6 @@ class FileUploadView(APIView):
                 try:
                     file_instance = UploadFile.objects.create(
                                            file=uploaded_file)
-                    file_instance.save()
                 except ValidationError as err:
                     return HttpResponse(err,
                                         content_type='text/plain')
@@ -200,7 +199,7 @@ class FileUploadView(APIView):
         return Response({'error': 'Invalid form data'},
                         template_name= 'breadth/file_upload.html')
     
-def file_analysis_view(request, slug):
+def breadth_analysis_view(request, slug):
     file_instance = get_object_or_404(UploadFile, slug=slug)
     decoded_file = file_instance.file.read().decode('utf-8')
     twenty_ema_data, Date = get_ema_data(decoded_file)
