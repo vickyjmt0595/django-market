@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screener Analysis</title>
     <style>
         body {
@@ -45,12 +47,14 @@
             background-color: #f1f1f1;
         }
     </style>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 </head>
 <body>
     <h1>Stock Screener Analysis for {{ file }}</h1>
 
     <div class="table-container">
-        <table>
+        <table id="stock-table" class="display">
             <thead>
                 <tr>
                     <th>Date</th>
@@ -62,9 +66,7 @@
                 {% for date, details in screener_data.items %}
                     {% for stock, change_percent in details.items %}
                     <tr>
-                        {% if forloop.first %}
-                            <td rowspan="{{ details|length }}">{{ date }}</td>
-                        {% endif %}
+                        <td>{{ date }}</td>
                         <td>{{ stock }}</td>
                         <td>{{ change_percent }}</td>
                     </tr>
@@ -73,6 +75,27 @@
             </tbody>
         </table>
     </div>
+    
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('#stock-table').DataTable({
+                "paging": true,  // Enable pagination
+                "ordering": true, // Enable column sorting
+                "searching": true, // Enable search functionality
+                "order": [[0, "asc"]], // Default sort by Date
+                "columnDefs": [
+                    { "orderable": true, "targets": [0, 1, 2] }, // Enable sorting on all columns
+                    { "type": "num", "targets": 2 } // Treat "Change %" as numeric for sorting
+                ]
+            });
+        });
+    </script>
     
 </body>
 </html>
