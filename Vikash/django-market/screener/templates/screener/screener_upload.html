@@ -1,0 +1,25 @@
+<html>
+<head>
+    <title>Screener Upload</title>
+</head>
+
+<body>
+    <h1>Upload a Stock Screener csv from Chartink</h1>
+    {% if error %}
+       <p style="color:red" > {{ error }} </p> 
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Upload csv</button>
+    </form>
+
+    <h2>Already uploaded screener csvs</h2>
+    {% for upload in uploads %}
+       <p> <a href="{{upload.get_absolute_url}}">{{upload.file}} from {{upload.screener.url}} </a></p>
+    {% endfor %}
+
+</body>
+
+</html>

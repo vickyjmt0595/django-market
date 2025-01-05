@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screener Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .table-container {
+            width: 80%;
+            margin: 20px auto;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+</head>
+<body>
+    <h1>Stock Screener Analysis for {{ file }}</h1>
+
+    <div class="table-container">
+        <table id="stock-table" class="display">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Stocks</th>
+                    <th>Change % Since</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in screener_data %}
+                    <tr>
+                        <td>{{ stock.date }}</td>
+                        <td>{{ stock.name }}</td>
+                        <td>{{ stock.change }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/1.13.6/sorting/datetime.js"></script>
+    <script>
+        // Add custom sorting for dates like "Dec 30, 2024"
+        $.fn.dataTable.ext.type.order['custom-date-pre'] = function(d) {
+        // Parse the date string into a JavaScript Date object
+        return new Date(d);
+    };
+    </script>
+    <script>
+        
+        $(document).ready(function() {
+            // Initialize DataTable
+            $('#stock-table').DataTable({
+                "paging": true,  // Enable pagination
+                "ordering": true, // Enable column sorting
+                "searching": true, // Enable search functionality
+                "pageLength": 200, // Show 50 entries by default
+                "lengthMenu": [ [25, 50, 100, 200], [25, 50, 100, 200] ], // Dropdown options for page length
+                "order": [[0, "asc"]], // Default sort by Date
+                "columnDefs": [
+                    { "type": "custom-date", "targets": 0 }, // Apply custom sorting to the Date column
+                    { "orderable": true, "targets": [0, 1, 2] }, // Enable sorting on all columns
+                    { "type": "num", "targets": 2 } // Treat "Change %" as numeric for sorting
+                ]
+            });
+        });
+    </script>
+    
+</body>
+</html>
