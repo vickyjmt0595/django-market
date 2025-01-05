@@ -17,10 +17,9 @@
 
     <h2>Already uploaded screener csvs</h2>
     {% for upload in uploads %}
-        <a href="{{ upload.get_absolute_url }}">{{upload.file.name}}</a>
+       <p> <a href="{{upload.get_absolute_url}}">{{upload.file}} from {{upload.screener.url}} </a></p>
     {% endfor %}
 
 </body>
-
 
 </html>

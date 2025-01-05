@@ -1,0 +1,20 @@
+<html>
+<head>
+    <title>Add Screener</title>
+</head>
+<body>
+    <h1>Add screener to DB</h1>
+    <form method="post", enctype="multipart/form-data">
+        {% csrf_token %}
+        <div>
+        {{form.as_p}}
+        </div>
+        <button type="submit">Add Screener</button>
+    </form>
+
+    <h1>Already existing screeners</h1>
+    {% for screener in screeners %}
+        <p><a href="{{screener.url}}">{{screener}}</a></p>
+    {% endfor %}
+
+</body>

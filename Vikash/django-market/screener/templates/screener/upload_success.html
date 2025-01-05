@@ -1,0 +1,16 @@
+<html>
+<head>
+    <title>Upload Success</title>
+</head>
+
+<body>
+    <h1>Upload is Successful</h1>
+ 
+    <h2>Get Screener Analysis of the uploaded file</h2>
+       <p> <a href="{{ upload.get_absolute_url }}">{{upload.file.name}}</a> </p>
+
+    <a href="{% url 'screener_upload' %}">Return back to the upload page</a>
+
+</body>
+
+</html>

@@ -51,23 +51,23 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
 </head>
 <body>
-    <h1>Stock Screener Analysis for {{ file }}</h1>
+    <h2>Stock Screener Analysis for file {{ file }} of screener '{{screener}}'</h2>
 
     <div class="table-container">
         <table id="stock-table" class="display">
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Stocks</th>
-                    <th>Change % Since</th>
+                    <th>Stock</th>
+                    <th>url</th>
                 </tr>
             </thead>
             <tbody>
-                {% for stock in screener_data %}
+                {% for stock in stocks_data %}
                     <tr>
                         <td>{{ stock.date }}</td>
                         <td>{{ stock.name }}</td>
-                        <td>{{ stock.change }}</td>
+                        <td><a href="{{ stock.url }}" target="_blank">{{ stock.url }}</a></td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -101,7 +101,7 @@
                 "columnDefs": [
                     { "type": "custom-date", "targets": 0 }, // Apply custom sorting to the Date column
                     { "orderable": true, "targets": [0, 1, 2] }, // Enable sorting on all columns
-                    { "type": "num", "targets": 2 } // Treat "Change %" as numeric for sorting
+                    // { "type": "num", "targets": 2 } // Treat "Change %" as numeric for sorting
                 ]
             });
         });
