@@ -1,9 +1,11 @@
 import csv
 
+from datetime import datetime
+
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from .forms import FileUploadForm
-from .models import UploadFile
+from .models import UploadFile, MarketBreadth
 
 from django.core.exceptions import ValidationError
 
@@ -27,7 +29,7 @@ def get_ema_data(decoded_file, file=False):
     Date = []
     for row in csv_reader:
         if line_count:
-            day_num, day, num_above_20_ema = (f'day{line_count}', row[0],
+            day_num, day, num_above_20_ema = (f'{line_count}', row[0],
                                                 row[5])
             breadth_details[day_num] = num_above_20_ema
             Date.append(day)
@@ -73,20 +75,22 @@ def decide_market_status(last_5_values):
         elif (day1 > day2 > day3 > day4):
             return('Red to Yellow')
         else:
-            return('Light Red')
+            return('Red')
 
         
 
 def process_ema_data(twenty_ema_data, Date):
-    num_days_data = 200
+    num_days_data = len(Date)
     ema_20_values = list(twenty_ema_data.values())[:num_days_data]
     ema_20_days = list(twenty_ema_data.keys())[:num_days_data]
     # ic(ema_20_values)
     # ic(ema_20_days) 
     data_size = len(ema_20_values)
-    # Reverse the date to show latest in last
-    Date.reverse()
     Date = Date[-num_days_data:]
+    formatted_dates = get_formatted_date(Date)
+    # print(f'The formatted dates : {formatted_dates}')
+    # Reverse the date to show latest in last
+    formatted_dates.reverse()
     start_index = -5
     end_index = 0
     index = 0
@@ -97,15 +101,8 @@ def process_ema_data(twenty_ema_data, Date):
         else:
             last_5_values = ema_20_values[start_index:end_index]
         days = ema_20_days[start_index]
-        """
-        print('---------------------------')
-    
-        print(days)
-        print(Date[index+4])
-        print(last_5_values[::-1])
-        """
         status = decide_market_status(last_5_values)
-        analysis[Date[index+4]] = {
+        analysis[formatted_dates[index+4]] = {
             'day_num': days,
             'last_five_days': last_5_values[::-1],
             'status': status 
@@ -142,6 +139,8 @@ def upload_file_view(request):
                 decoded_file = file_instance.file.read().decode('utf-8')
                 twenty_ema_data, Date = get_ema_data(decoded_file)
                 analysis = process_ema_data(twenty_ema_data, Date)
+                # Update entry into db
+                update_analysis_to_db(analysis)
                 
                 return render(request, 'breadth/file_analysis_result.html',
                               {'data': analysis}
@@ -186,6 +185,8 @@ class FileUploadView(APIView):
                                                      file=True)
                 print(twenty_ema_data)
                 analysis = process_ema_data(twenty_ema_data, Date)
+                # Update entry into db
+                update_analysis_to_db(analysis)
                 # print({'data': analysis})
                 return Response({'data': analysis},
                                 template_name='breadth/file_analysis_result.html')
@@ -198,11 +199,117 @@ class FileUploadView(APIView):
             
         return Response({'error': 'Invalid form data'},
                         template_name= 'breadth/file_upload.html')
+
+def update_analysis_to_db(data):
+    for date, details in data.items():
+        day_num = details['day_num']
+        last_five_days = details['last_five_days']
+        status = details['status']
+        _,created = MarketBreadth.objects.get_or_create(date=date, day_num=day_num,
+                                                last_five_days=last_five_days,
+                                                status=status)
+        if created:
+            print(f'Created entry in table for {date}')
+
+def get_formatted_date(date_list):
+    seen_dates = dict()
+    formatted_dates = []
+    for date in date_list:
+        formatted_date = convert_to_yyyy_mm_dd(date, seen_dates)
+        # print(f'date is {date}, formatted date is {formatted_date}')
+        formatted_dates.append(formatted_date)
+    return formatted_dates
+
+
+def convert_to_yyyy_mm_dd(date_str, seen_dates):
+    """
+    Converts a date string like '6th Jan' into 'YYYY-MM-DD' format.
+    
+    Parameters:
+    - date_str (str): The date string in the format like '6th Jan'.
+    - seen_dates (set): A set to track already seen dates.
+
+    Returns:
+    - str: The date in 'YYYY-MM-DD' format.
+    """
+    # Remove ordinal suffixes (e.g., '6th' -> '6')
+    date_str = date_str.replace("st", "").replace("nd", "").replace("rd", "").replace("th", "")
+    
+    # Add the current year to the date string
+    current_date = datetime.now()
+    current_year = current_date.year
+    
+    # Attempt to parse the date using current date
+    full_date_str = f"{date_str} {current_year}"
+    
+    # Convert to a datetime object
+    try:
+        date_obj = datetime.strptime(full_date_str, "%d %b %Y")
+    except ValueError:
+        # Handle invalid dates like 29th Feb in a non-leap year by falling back to the previous year
+        full_date_str = f"{date_str} {current_year - 1}"
+        try:
+            date_obj = datetime.strptime(full_date_str, "%d %b %Y")
+        except ValueError:
+            print(f"Invalid date: {date_str} for both current and last year.")
+
+    # Check if the date is in the future
+    if date_obj > current_date:
+        full_date_str = f"{date_str} {current_year - 1}"
+        date_obj = datetime.strptime(full_date_str, "%d %b %Y")
+    
+    # Check if the date is on Market holidays
+    if is_market_holiday(date_obj):
+        date_obj = date_obj.replace(year=date_obj.year - 1)
+
+    
+    # Check how many times this date has been seen
+    base_date = date_obj.strftime("%d-%b")  # Base date format to track day and month
+
+    # Check if this date has already been seen
+    if base_date in seen_dates:
+        # Use the previous year if it's already seen
+        year_adjustment = seen_dates[base_date]
+        date_obj = date_obj.replace(year=date_obj.year - year_adjustment)
+        seen_dates[base_date] += 1
+    else:
+        # First time seeing this date
+        seen_dates[base_date] = 1
+
+    # Return the formatted date
+    return date_obj.strftime("%Y-%m-%d")
+
+# Define market holidays (weekends or specific holidays)
+def is_market_holiday(date_obj):
+    """
+    Checks if a given date is a market holiday (weekend or predefined holiday).
+    """
+    # Weekends (Saturday, Sunday)
+    if date_obj.weekday() in (5, 6):  # 5 = Saturday, 6 = Sunday
+        return True
+
+    # Add predefined market holidays (example: New Year's Day, Independence Day, etc.)
+    market_holidays = {
+
+        # Add other holidays here...
+    }
+    if date_obj.date() in market_holidays:
+        return True
+    
+    return False
+
     
 def breadth_analysis_view(request, slug):
     file_instance = get_object_or_404(UploadFile, slug=slug)
     decoded_file = file_instance.file.read().decode('utf-8')
     twenty_ema_data, Date = get_ema_data(decoded_file)
     analysis = process_ema_data(twenty_ema_data, Date)
+    # Update entry into db
+    update_analysis_to_db(analysis)
     return render(request, 'breadth/file_analysis_result.html',
                   {'data': analysis})
+
+def analysis_on_db_data(request):
+    data = MarketBreadth.objects.all()
+    return render(request, 'breadth/db_analysis_result.html',
+                  {'data': data})
