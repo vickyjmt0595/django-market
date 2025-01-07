@@ -34,3 +34,15 @@ class UploadFile(models.Model):
             for chunk in self.file.chunks():
                 hasher.update(chunk)
         return hasher.hexdigest()
+
+class MarketBreadth(models.Model):
+    date = models.DateField()
+    day_num = models.CharField()
+    last_five_days = models.JSONField()
+    status = models.CharField()
+
+    def __str__(self):
+        return str(self.date)
+    
+    class Meta:
+        unique_together = ('date', 'last_five_days')

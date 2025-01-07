@@ -16,6 +16,10 @@
         <button type="submit">Upload</button>
 
     </form>
+
+    <h1>Breadth Analysis till the saved date</h1>
+    <p><a href="{% url 'analysis_on_db_data' %}">Analysis from Db</a></p>
+
     <h1 >Already uploaded files</h1>
     <ul>
         {% for upload in uploads %}

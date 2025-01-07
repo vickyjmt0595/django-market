@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Market Breadth</title>
+    <title>Market Breadth Db</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -72,9 +72,9 @@
     </style>
 </head>
 <body>
-    <h1>Market Breadth Data </h1>
+    <h1>Market Breadth from Database</h1>
     <div class="table-container">
-        <table>
+        <table id="MB-table" class="display">
             <thead>
                 <tr>
                     <th>Date</th>
@@ -84,44 +84,75 @@
                 </tr>
             </thead>
             <tbody>
-                {% for date, details in data.items %}
+                {% for day in data %}
                 <tr>
-                    <td>{{ date }}</td>
-                    <td>{{ details.day_num }}</td>
+                    <td>{{ day.date }}</td>
+                    <td>{{ day.day_num }}</td>
                     <td>
-                        {% for value in details.last_five_days %}
+                        {% for value in day.last_five_days %}
                             {{ value }}{% if not forloop.last %}, {% endif %}
                         {% endfor %}
                     </td>
                     <td class="status-cell 
-                        {% if details.status == 'Green to Yellow' %}
+                        {% if day.status == 'Green to Yellow' %}
                             status-green-to-yellow
-                        {% elif details.status == 'Yellow to Red' %}
+                        {% elif day.status == 'Yellow to Red' %}
                             status-yellow-to-red
-                        {% elif details.status == 'Bright to Light Green' %}
+                        {% elif day.status == 'Bright to Light Green' %}
                             status-bright-to-lightgreen
-                        {% elif details.status == 'Light Red' %}
+                        {% elif day.status == 'Light Red' %}
                             status-light-red
-                        {% elif details.status == 'Red' %}
+                        {% elif day.status == 'Red' %}
                             status-red
-                        {% elif details.status == 'Light Green' %}
+                        {% elif day.status == 'Light Green' %}
                             status-light-green
-                        {% elif details.status == 'Bright Green' %}
+                        {% elif day.status == 'Bright Green' %}
                             status-dark-green
-                        {% elif details.status == 'Dark Red' %}
+                        {% elif day.status == 'Dark Red' %}
                             status-dark-red
-                        {% elif details.status == 'Red to Yellow' %}
+                        {% elif day.status == 'Red to Yellow' %}
                             status-red-to-yellow
-                        {% elif details.status == 'Yellow to Green' %}
+                        {% elif day.status == 'Yellow to Green' %}
                             status-yellow-to-green
                         {% endif %}
                     ">
-                        {{ details.status }}
+                        {{ day.status }}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+     <!-- jQuery -->
+     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+     <!-- DataTables JS -->
+     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+     <script src="https://cdn.datatables.net/plug-ins/1.13.6/sorting/datetime.js"></script>
+     <script>
+         // Add custom sorting for dates like "Dec 30, 2024"
+         $.fn.dataTable.ext.type.order['custom-date-pre'] = function(d) {
+         // Parse the date string into a JavaScript Date object
+         return new Date(d);
+     };
+     </script>
+     <script>
+         
+         $(document).ready(function() {
+             // Initialize DataTable
+             $('#MB-table').DataTable({
+                 "paging": true,  // Enable pagination
+                 "ordering": true, // Enable column sorting
+                 "searching": true, // Enable search functionality
+                 "pageLength": 200, // Show 50 entries by default
+                 "lengthMenu": [ [25, 50, 100, 200], [25, 50, 100, 200] ], // Dropdown options for page length
+                 "order": [[0, "asc"]], // Default sort by Date
+                 "columnDefs": [
+                     { "type": "custom-date", "targets": 0 }, // Apply custom sorting to the Date column
+                     { "orderable": true, "targets": [0] } // Enable sorting on all columns
+                     { "type": "str", "targets": 1 } // Treat "Change %" as numeric for sorting
+                 ]
+             });
+         });
+     </script>
 </body>
 </html>
